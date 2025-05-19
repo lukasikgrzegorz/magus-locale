@@ -12,6 +12,26 @@ import { ollamaApi } from '../../lib/api';
   <h1 class="text-3xl font-bold text-primary-800 mb-2">Anti-Spam Charm</h1>
   <p class="text-lg text-gray-600 mb-8">Wykrywa, czy wiadomość jest spamem.</p>
   
+  <div id="model-selector" class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+    <h3 class="font-medium text-blue-700 mb-2">Wybierz model:</h3>
+    <div class="flex items-center">
+      <select 
+        id="model" 
+        class="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+      >
+        <option value="" disabled selected>Ładowanie modeli...</option>
+      </select>
+      <button 
+        id="refresh-models" 
+        class="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md transition-colors"
+        title="Odśwież listę modeli"
+      >
+        <span class="block transform rotate-0 transition-transform duration-500">↻</span>
+      </button>
+    </div>
+    <p id="model-loading" class="text-sm text-blue-600 mt-2">Ładowanie listy dostępnych modeli...</p>
+  </div>
+  
   <form id="spamForm" class="bg-white rounded-lg shadow-md p-6 mb-8">
     <div class="mb-4">
       <label for="question" class="block text-gray-700 font-medium mb-2">Pytanie</label>
@@ -57,6 +77,82 @@ import { ollamaApi } from '../../lib/api';
   import { ollamaApi } from '../../lib/api';
   import { resultStore, loadingStore, errorStore } from '../../store/trials';
 
+  /**
+   * Pobiera listę modeli z API i aktualizuje dropdown
+   * @param modelSelect - Element select do aktualizacji
+   * @param refreshModelsButton - Przycisk odświeżania
+   * @param modelLoadingText - Element z tekstem statusu ładowania
+   */
+  async function fetchModels(
+    modelSelect: HTMLSelectElement,
+    refreshModelsButton: HTMLButtonElement,
+    modelLoadingText: HTMLParagraphElement
+  ) {
+    if (!modelSelect || !refreshModelsButton || !modelLoadingText) {
+      console.error("Brakuje wymaganych elementów DOM dla funkcji fetchModels");
+      return;
+    }
+    
+    try {
+      modelSelect.disabled = true;
+      refreshModelsButton.disabled = true;
+      modelLoadingText.textContent = 'Ładowanie listy dostępnych modeli...';
+      modelLoadingText.classList.remove('hidden');
+      
+      const refreshIcon = refreshModelsButton.querySelector('span');
+      if (refreshIcon) {
+        refreshIcon.classList.add('animate-spin');
+      }
+      
+      const models = await ollamaApi.getModels();
+      
+      // Wyczyść obecne opcje
+      modelSelect.innerHTML = '';
+      
+      // Dodaj dostępne modele
+      if (models && models.length > 0) {
+        models.forEach((model: any) => {
+          const option = document.createElement('option');
+          option.value = model.name;
+          option.textContent = `${model.name} (${(model.size / (1024 * 1024)).toFixed(0)}MB)`;
+          modelSelect.appendChild(option);
+        });
+        modelLoadingText.textContent = `Znaleziono ${models.length} modeli`;
+        setTimeout(() => {
+          modelLoadingText.classList.add('hidden');
+        }, 3000);
+      } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Brak dostępnych modeli';
+        option.disabled = true;
+        option.selected = true;
+        modelSelect.appendChild(option);
+        modelLoadingText.textContent = 'Brak dostępnych modeli. Sprawdź, czy Ollama działa prawidłowo.';
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      modelLoadingText.textContent = 'Błąd podczas ładowania modeli. Sprawdź konsolę, aby uzyskać więcej informacji.';
+      
+      // Dodaj opcję awaryjną
+      const option = document.createElement('option');
+      option.value = 'SpeakLeash/bielik-4.5b-v3.0-instruct:Q8_0';
+      option.textContent = 'SpeakLeash/bielik-4.5b-v3.0-instruct:Q8_0 (domyślny)';
+      option.selected = true;
+      modelSelect.innerHTML = '';
+      modelSelect.appendChild(option);
+    } finally {
+      if (modelSelect && refreshModelsButton) {
+        modelSelect.disabled = false;
+        refreshModelsButton.disabled = false;
+        const refreshIcon = refreshModelsButton.querySelector('span');
+        if (refreshIcon) {
+          refreshIcon.classList.remove('animate-spin');
+        }
+      }
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('spamForm') as HTMLFormElement | null;
     const resultDiv = document.getElementById('result') as HTMLDivElement | null;
@@ -65,32 +161,55 @@ import { ollamaApi } from '../../lib/api';
     const errorDiv = document.getElementById('error') as HTMLDivElement | null;
     const questionInput = document.getElementById('question') as HTMLInputElement | null;
     const answerInput = document.getElementById('answer') as HTMLTextAreaElement | null;
+    const modelSelect = document.getElementById('model') as HTMLSelectElement | null;
+    const refreshModelsButton = document.getElementById('refresh-models') as HTMLButtonElement | null;
+    const modelLoadingText = document.getElementById('model-loading') as HTMLParagraphElement | null;
 
     // Sprawdź czy wszystkie elementy zostały znalezione
-    if (!form || !resultDiv || !resultContent || !loadingDiv || !errorDiv || !questionInput || !answerInput) {
+    if (!form || !resultDiv || !resultContent || !loadingDiv || !errorDiv || !questionInput || !answerInput || !modelSelect || !refreshModelsButton || !modelLoadingText) {
       console.error("Nie znaleziono wszystkich wymaganych elementów DOM");
       return;
     }
 
+    // Pierwsza inicjalizacja listy modeli
+    fetchModels(modelSelect, refreshModelsButton, modelLoadingText);
+
+    // Obsługa przycisku odświeżania
+    refreshModelsButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      fetchModels(modelSelect, refreshModelsButton, modelLoadingText);
+    });
+
     // Subskrypcja do zmian w store
     loadingStore.subscribe((loading) => {
-      loadingDiv.classList.toggle('hidden', !loading);
+      if (loadingDiv) {
+        loadingDiv.classList.toggle('hidden', !loading);
+      }
     });
 
     resultStore.subscribe((result) => {
+      if (!resultDiv || !resultContent || !modelSelect) return;
+      
       if (result) {
         resultDiv.classList.remove('hidden');
         try {
-          const parsedContent = JSON.parse(result.message.content);
+          const parsedContent = JSON.parse(result.message?.content || "{}");
           
           // Wyświetl wynik w czytelnej formie
           resultContent.innerHTML = `
             <p class="text-lg font-semibold ${parsedContent.isSpam ? 'text-red-600' : 'text-green-600'}">
               ${parsedContent.isSpam ? '🚫 To jest spam!' : '✅ To nie jest spam.'}
             </p>
+            <p class="text-sm text-gray-600 mt-2">
+              Model: ${modelSelect.value}
+            </p>
           `;
         } catch (error) {
-          resultContent.textContent = result.message.content;
+          if (result.message?.content) {
+            resultContent.textContent = result.message.content;
+          } else {
+            resultContent.textContent = "Otrzymano nieprawidłową odpowiedź.";
+          }
         }
       } else {
         resultDiv.classList.add('hidden');
@@ -98,6 +217,8 @@ import { ollamaApi } from '../../lib/api';
     });
 
     errorStore.subscribe((error) => {
+      if (!errorDiv) return;
+      
       if (error) {
         errorDiv.classList.remove('hidden');
         errorDiv.textContent = error;
@@ -109,16 +230,27 @@ import { ollamaApi } from '../../lib/api';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      if (!questionInput || !answerInput || !modelSelect) {
+        errorStore.set('Nie można znaleźć wymaganych elementów formularza.');
+        return;
+      }
+      
       // Pobierz wartości z formularza
       const question = questionInput.value;
       const answer = answerInput.value;
+      const selectedModel = modelSelect.value;
+      
+      if (!selectedModel) {
+        errorStore.set('Nie wybrano modelu. Poczekaj, aż lista modeli się załaduje lub odśwież ją ręcznie.');
+        return;
+      }
       
       try {
         loadingStore.set(true);
         errorStore.set(null);
         
-        // Wywołaj API
-        const response = await ollamaApi.checkSpam(question, answer);
+        // Wywołaj API z wybranym modelem
+        const response = await ollamaApi.checkSpam(question, answer, selectedModel);
         resultStore.set(response);
       } catch (error) {
         errorStore.set(error instanceof Error ? error.message : 'Wystąpił błąd podczas przetwarzania zapytania.');
