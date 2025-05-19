@@ -5,15 +5,29 @@ import SpellButton from '../../components/SpellButton.astro';
 
 <Layout title="Promptus Quadratum | Magus Locale">
   <div class="mb-6">
-    <a href="/" class="text-primary-600 hover:text-primary-800 transition-colors">&larr; Powrót</a>
+    <a href="/" class="text-primary-600 hover:text-primary-800 transition-colors flex items-center">
+      <span class="mr-2">✨</span> <span>&larr; Powrót</span>
+    </a>
   </div>
   
-  <h1 class="text-3xl font-bold text-primary-800 mb-2">Promptus Quadratum</h1>
-  <p class="text-lg text-gray-600 mb-4">Sprawdza, czy Twój prompt zawiera wszystkie cztery wymagane elementy.</p>
+  <div class="text-center mb-8">
+    <h1 class="text-4xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 inline-block text-transparent bg-clip-text mb-2">
+      Promptus Quadratum
+    </h1>
+    <p class="text-lg text-gray-600 mb-2">Sprawdza, czy Twój prompt zawiera wszystkie cztery wymagane elementy.</p>
+    <div class="flex justify-center space-x-2">
+      <span class="inline-block w-2 h-2 bg-primary-400 rounded-full animate-pulse"></span>
+      <span class="inline-block w-2 h-2 bg-primary-600 rounded-full animate-pulse delay-100"></span>
+      <span class="inline-block w-2 h-2 bg-secondary-400 rounded-full animate-pulse delay-200"></span>
+    </div>
+  </div>
   
-  <div class="bg-secondary-50 p-4 rounded-md mb-8 border border-secondary-200">
-    <h3 class="text-lg font-medium text-secondary-800 mb-2">Wymagane elementy:</h3>
-    <ul class="list-disc list-inside text-secondary-700">
+  <div class="bg-gradient-to-r from-secondary-50 to-purple-50 p-6 rounded-lg mb-8 border border-secondary-200 shadow-md relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-200 to-purple-200 rounded-full blur-2xl opacity-30 -mr-10 -mt-10 z-0"></div>
+    <h3 class="text-lg font-medium text-secondary-800 mb-2 flex items-center relative z-10">
+      <span class="mr-2">📋</span>Wymagane elementy:
+    </h3>
+    <ul class="list-disc list-inside text-secondary-700 relative z-10">
       <li>Kontekst (kim jest model, jaka jest sytuacja)</li>
       <li>Zadanie (co konkretnie ma zrobić model)</li>
       <li>Format odpowiedzi (jak ma wyglądać wynik)</li>
@@ -21,41 +35,50 @@ import SpellButton from '../../components/SpellButton.astro';
     </ul>
   </div>
   
-  <div id="model-selector" class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-    <h3 class="font-medium text-blue-700 mb-2">Wybierz model:</h3>
-    <div class="flex items-center">
+  <div id="model-selector" class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8 shadow-md relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-200 to-secondary-200 rounded-full blur-2xl opacity-30 -mr-10 -mt-10 z-0"></div>
+    <h3 class="font-medium text-indigo-800 mb-3 flex items-center text-lg">
+      <span class="mr-2">🔮</span>Wybierz model magiczny:
+    </h3>
+    <div class="flex items-center relative z-10">
       <select 
         id="model" 
-        class="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        class="w-full px-4 py-3 border border-indigo-300 rounded-md bg-white bg-opacity-80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm text-indigo-700 appearance-none"
       >
         <option value="" disabled selected>Ładowanie modeli...</option>
       </select>
       <button 
         id="refresh-models" 
-        class="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md transition-colors"
+        class="ml-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white px-4 py-3 rounded-md transition-colors shadow-md"
         title="Odśwież listę modeli"
       >
         <span class="block transform rotate-0 transition-transform duration-500">↻</span>
       </button>
     </div>
-    <p id="model-loading" class="text-sm text-blue-600 mt-2">Ładowanie listy dostępnych modeli...</p>
+    <p id="model-loading" class="text-sm text-indigo-600 mt-2 italic">Przywoływanie dostępnych modeli...</p>
   </div>
   
-  <form id="promptForm" class="bg-white rounded-lg shadow-md p-6 mb-8">
-    <div class="mb-6">
-      <label for="prompt" class="block text-gray-700 font-medium mb-2">Twój prompt</label>
+  <form id="promptForm" class="bg-gradient-to-r from-white to-purple-50 rounded-lg shadow-lg p-8 mb-8 border border-indigo-100 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-400 to-secondary-400"></div>
+    <div class="absolute top-0 right-0 w-24 h-24 bg-blue-100 rounded-full blur-xl opacity-50 -mr-10 -mt-10"></div>
+    <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-100 rounded-full blur-xl opacity-50 -ml-10 -mb-10"></div>
+    
+    <div class="mb-6 relative z-10">
+      <label for="prompt" class="block text-indigo-800 font-medium mb-2 flex items-center">
+        <span class="mr-2">📜</span>Twój prompt
+      </label>
       <textarea
         id="prompt"
         name="prompt"
         rows="8"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        class="w-full px-4 py-3 border border-indigo-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm bg-white bg-opacity-80"
         required
         placeholder="Wpisz prompt, który chcesz przetestować..."
       ></textarea>
     </div>
 
     <div class="flex justify-center">
-      <SpellButton text="Rzuć Promptus Quadratum" />
+      <SpellButton text="✨ Rzuć Promptus Quadratum ✨" />
     </div>
   </form>
 
@@ -76,12 +99,6 @@ import SpellButton from '../../components/SpellButton.astro';
   import { ollamaApi } from '../../lib/api';
   import { resultStore, loadingStore, errorStore } from '../../store/trials';
 
-  /**
-   * Pobiera listę modeli z API i aktualizuje dropdown
-   * @param modelSelect - Element select do aktualizacji
-   * @param refreshModelsButton - Przycisk odświeżania
-   * @param modelLoadingText - Element z tekstem statusu ładowania
-   */
   async function fetchModels(
     modelSelect: HTMLSelectElement, 
     refreshModelsButton: HTMLButtonElement, 
@@ -105,10 +122,8 @@ import SpellButton from '../../components/SpellButton.astro';
       
       const models = await ollamaApi.getModels();
       
-      // Wyczyść obecne opcje
       modelSelect.innerHTML = '';
       
-      // Dodaj dostępne modele
       if (models && models.length > 0) {
         models.forEach((model: any) => {
           const option = document.createElement('option');
@@ -133,7 +148,6 @@ import SpellButton from '../../components/SpellButton.astro';
       console.error('Error fetching models:', error);
       modelLoadingText.textContent = 'Błąd podczas ładowania modeli. Sprawdź konsolę, aby uzyskać więcej informacji.';
       
-      // Dodaj opcję awaryjną
       const option = document.createElement('option');
       option.value = 'SpeakLeash/bielik-4.5b-v3.0-instruct:Q8_0';
       option.textContent = 'SpeakLeash/bielik-4.5b-v3.0-instruct:Q8_0 (domyślny)';
@@ -163,22 +177,18 @@ import SpellButton from '../../components/SpellButton.astro';
     const refreshModelsButton = document.getElementById('refresh-models') as HTMLButtonElement | null;
     const modelLoadingText = document.getElementById('model-loading') as HTMLParagraphElement | null;
     
-    // Sprawdzamy czy wszystkie elementy DOM zostały poprawnie znalezione
     if (!form || !resultDiv || !resultContent || !loadingDiv || !errorDiv || !promptInput || !modelSelect || !refreshModelsButton || !modelLoadingText) {
       console.error('Nie udało się znaleźć wszystkich wymaganych elementów DOM');
       return;
     }
     
-    // Pierwsza inicjalizacja listy modeli
     fetchModels(modelSelect, refreshModelsButton, modelLoadingText);
 
-    // Obsługa przycisku odświeżania
     refreshModelsButton.addEventListener('click', (e) => {
       e.preventDefault();
       fetchModels(modelSelect, refreshModelsButton, modelLoadingText);
     });
     
-    // Wymagane elementy
     const requiredElements = [
       "Kontekst",
       "Zadanie",
@@ -186,7 +196,6 @@ import SpellButton from '../../components/SpellButton.astro';
       "Przykład"
     ];
 
-    // Subskrypcje do store'ów
     loadingStore.subscribe((loading) => {
       if (loadingDiv) {
         loadingDiv.classList.toggle('hidden', !loading);
@@ -207,14 +216,14 @@ import SpellButton from '../../components/SpellButton.astro';
           
           if (containsAll) {
             html = `
-              <div class="p-4 bg-green-100 text-green-800 rounded-md mb-4">
-                <p class="font-bold">✅ Świetnie! Twój prompt zawiera wszystkie wymagane elementy.</p>
+              <div class="p-4 bg-green-100 text-green-800 rounded-md mb-4 shadow-sm">
+                <p class="font-bold flex items-center"><span class="mr-2">✅</span> Świetnie! Twój prompt zawiera wszystkie wymagane elementy.</p>
               </div>
             `;
           } else {
             html = `
-              <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md mb-4">
-                <p class="font-bold">⚠️ Twój prompt nie zawiera wszystkich wymaganych elementów.</p>
+              <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md mb-4 shadow-sm">
+                <p class="font-bold flex items-center"><span class="mr-2">⚠️</span> Twój prompt nie zawiera wszystkich wymaganych elementów.</p>
                 <p class="mt-2">Brakujące elementy:</p>
                 <ul class="list-disc list-inside mt-1">
                   ${missingElements.map(el => `<li>${el}</li>`).join('')}

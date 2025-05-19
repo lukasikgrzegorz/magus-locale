@@ -5,12 +5,18 @@ import { trialsData } from '../store/trials';
 ---
 
 <Layout title="Magus Locale - Testy językowe dla magów">
-  <header class="text-center mb-12">
-    <h1 class="text-4xl font-bold text-primary-800 mb-4">Magus Locale</h1>
-    <p class="text-xl text-gray-600">Zaklęcia do lokalnego testowania modeli językowych</p>
+  <header class="text-center mb-12 relative overflow-hidden p-8">
+    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-200 to-secondary-200 rounded-full blur-2xl opacity-30 -mr-10 -mt-10 z-0"></div>
+    <div class="absolute bottom-0 left-0 w-40 h-40 bg-purple-100 rounded-full blur-2xl opacity-40 -ml-10 -mb-10"></div>
+    
+    <h1 class="text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 inline-block text-transparent bg-clip-text relative ">
+      Magus Locale
+    </h1>
+    
+    <p class="text-xl text-gray-600 mb-4 relative z-10">Zaklęcia do lokalnego testowania modeli językowych</p>
   </header>
 
-  <section class="trials-list">
+  <section class="trials-list grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto px-4">
     {trialsData.map(trial => (
       <TrialCard 
         title={trial.title}

@@ -12,7 +12,7 @@ export const trialsData: Trial[] = [
   {
     id: 'anti-spam',
     title: 'Anti-Spam Charm',
-    description: 'Wykrywa, czy wiadomość jest spamem.',
+    description: 'Wykrywa, czy odpowiedź na pytanie nie jest spamem.',
     slug: 'anti-spam'
   },
   {
