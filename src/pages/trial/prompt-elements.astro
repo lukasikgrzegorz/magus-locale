@@ -1,0 +1,166 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SpellButton from '../../components/SpellButton.astro';
+---
+
+<Layout title="Promptus Quadratum | Magus Locale">
+  <div class="mb-6">
+    <a href="/" class="text-primary-600 hover:text-primary-800 transition-colors">&larr; Powrót</a>
+  </div>
+  
+  <h1 class="text-3xl font-bold text-primary-800 mb-2">Promptus Quadratum</h1>
+  <p class="text-lg text-gray-600 mb-4">Sprawdza, czy Twój prompt zawiera wszystkie cztery wymagane elementy.</p>
+  
+  <div class="bg-secondary-50 p-4 rounded-md mb-8 border border-secondary-200">
+    <h3 class="text-lg font-medium text-secondary-800 mb-2">Wymagane elementy:</h3>
+    <ul class="list-disc list-inside text-secondary-700">
+      <li>Kontekst (kim jest model, jaka jest sytuacja)</li>
+      <li>Zadanie (co konkretnie ma zrobić model)</li>
+      <li>Format odpowiedzi (jak ma wyglądać wynik)</li>
+      <li>Przykład (przykładowa odpowiedź lub dane)</li>
+    </ul>
+  </div>
+  
+  <form id="promptForm" class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="mb-6">
+      <label for="prompt" class="block text-gray-700 font-medium mb-2">Twój prompt</label>
+      <textarea
+        id="prompt"
+        name="prompt"
+        rows="8"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+        placeholder="Wpisz prompt, który chcesz przetestować..."
+      ></textarea>
+    </div>
+
+    <div class="flex justify-center">
+      <SpellButton text="Rzuć Promptus Quadratum" />
+    </div>
+  </form>
+
+  <div id="result" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold text-primary-800 mb-4">Wynik zaklęcia:</h2>
+    <div id="resultContent" class="bg-gray-100 p-4 rounded-md"></div>
+  </div>
+
+  <div id="loading" class="hidden text-center">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
+    <p class="mt-2 text-primary-700">Rzucanie zaklęcia...</p>
+  </div>
+
+  <div id="error" class="hidden bg-red-100 text-red-700 p-4 rounded-md mb-8"></div>
+</Layout>
+
+<script>
+  import { ollamaApi } from '../../lib/api';
+  import { resultStore, loadingStore, errorStore } from '../../store/trials';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('promptForm');
+    const resultDiv = document.getElementById('result');
+    const resultContent = document.getElementById('resultContent');
+    const loadingDiv = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    
+    // Sprawdzamy czy wszystkie elementy DOM zostały poprawnie znalezione
+    if (!form || !resultDiv || !resultContent || !loadingDiv || !errorDiv) {
+      console.error('Nie udało się znaleźć wszystkich wymaganych elementów DOM');
+      return;
+    }
+    
+    // Wymagane elementy
+    const requiredElements = [
+      "Kontekst",
+      "Zadanie",
+      "Format odpowiedzi",
+      "Przykład"
+    ];
+
+    // Subskrypcje do store'ów
+    loadingStore.subscribe((loading) => {
+      if (loadingDiv) {
+        loadingDiv.classList.toggle('hidden', !loading);
+      }
+    });
+
+    resultStore.subscribe((result) => {
+      if (!resultDiv || !resultContent) return;
+      
+      if (result) {
+        resultDiv.classList.remove('hidden');
+        try {
+          const parsedContent = JSON.parse(result.message?.content || '{}');
+          const containsAll = parsedContent.containsAll;
+          const missingElements = parsedContent.missingElements || [];
+          
+          let html = '';
+          
+          if (containsAll) {
+            html = `
+              <div class="p-4 bg-green-100 text-green-800 rounded-md mb-4">
+                <p class="font-bold">✅ Świetnie! Twój prompt zawiera wszystkie wymagane elementy.</p>
+              </div>
+            `;
+          } else {
+            html = `
+              <div class="p-4 bg-yellow-100 text-yellow-800 rounded-md mb-4">
+                <p class="font-bold">⚠️ Twój prompt nie zawiera wszystkich wymaganych elementów.</p>
+                <p class="mt-2">Brakujące elementy:</p>
+                <ul class="list-disc list-inside mt-1">
+                  ${missingElements.map(el => `<li>${el}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          resultContent.innerHTML = html;
+        } catch (error) {
+          if (result.message?.content) {
+            resultContent.textContent = result.message.content;
+          } else {
+            resultContent.textContent = 'Otrzymano nieprawidłową odpowiedź.';
+          }
+        }
+      } else {
+        resultDiv.classList.add('hidden');
+      }
+    });
+
+    errorStore.subscribe((error) => {
+      if (!errorDiv) return;
+      
+      if (error) {
+        errorDiv.classList.remove('hidden');
+        errorDiv.textContent = error;
+      } else {
+        errorDiv.classList.add('hidden');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const promptElement = document.getElementById('prompt') as HTMLTextAreaElement;
+      if (!promptElement) {
+        errorStore.set('Nie znaleziono pola formularza.');
+        return;
+      }
+      
+      const prompt = promptElement.value;
+      
+      try {
+        loadingStore.set(true);
+        errorStore.set(null);
+        
+        const response = await ollamaApi.checkPromptElements(prompt, requiredElements);
+        resultStore.set(response);
+      } catch (error) {
+        errorStore.set(error instanceof Error ? error.message : 'Wystąpił błąd podczas przetwarzania zapytania.');
+        resultStore.set(null);
+      } finally {
+        loadingStore.set(false);
+      }
+    });
+  });
+</script>

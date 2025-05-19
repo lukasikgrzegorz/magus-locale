@@ -1,0 +1,23 @@
+---
+/**
+ * Przycisk do uruchamiania zaklęć (wysyłania zapytań)
+ * @param {string} text - Tekst przycisku
+ * @param {string} type - Typ przycisku
+ */
+interface Props {
+  text?: string;
+  type?: "button" | "submit" | "reset";
+}
+
+const { 
+  text = "Rzuć zaklęcie", 
+  type = "submit" 
+} = Astro.props;
+---
+
+<button 
+  type={type}
+  class="px-6 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white font-medium rounded-md shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+>
+  {text}
+</button>

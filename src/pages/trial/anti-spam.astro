@@ -1,0 +1,131 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SpellButton from '../../components/SpellButton.astro';
+import { ollamaApi } from '../../lib/api';
+---
+
+<Layout title="Anti-Spam Charm | Magus Locale">
+  <div class="mb-6">
+    <a href="/" class="text-primary-600 hover:text-primary-800 transition-colors">&larr; Powrót</a>
+  </div>
+  
+  <h1 class="text-3xl font-bold text-primary-800 mb-2">Anti-Spam Charm</h1>
+  <p class="text-lg text-gray-600 mb-8">Wykrywa, czy wiadomość jest spamem.</p>
+  
+  <form id="spamForm" class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="mb-4">
+      <label for="question" class="block text-gray-700 font-medium mb-2">Pytanie</label>
+      <input
+        type="text"
+        id="question"
+        name="question"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+      />
+    </div>
+
+    <div class="mb-6">
+      <label for="answer" class="block text-gray-700 font-medium mb-2">Odpowiedź</label>
+      <textarea
+        id="answer"
+        name="answer"
+        rows="4"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        required
+      ></textarea>
+    </div>
+
+    <div class="flex justify-center">
+      <SpellButton text="Rzuć Anti-Spam Charm" />
+    </div>
+  </form>
+
+  <div id="result" class="hidden bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold text-primary-800 mb-4">Wynik zaklęcia:</h2>
+    <div id="resultContent" class="bg-gray-100 p-4 rounded-md"></div>
+  </div>
+
+  <div id="loading" class="hidden text-center">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
+    <p class="mt-2 text-primary-700">Rzucanie zaklęcia...</p>
+  </div>
+
+  <div id="error" class="hidden bg-red-100 text-red-700 p-4 rounded-md mb-8"></div>
+</Layout>
+
+<script>
+  import { ollamaApi } from '../../lib/api';
+  import { resultStore, loadingStore, errorStore } from '../../store/trials';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('spamForm') as HTMLFormElement | null;
+    const resultDiv = document.getElementById('result') as HTMLDivElement | null;
+    const resultContent = document.getElementById('resultContent') as HTMLDivElement | null;
+    const loadingDiv = document.getElementById('loading') as HTMLDivElement | null;
+    const errorDiv = document.getElementById('error') as HTMLDivElement | null;
+    const questionInput = document.getElementById('question') as HTMLInputElement | null;
+    const answerInput = document.getElementById('answer') as HTMLTextAreaElement | null;
+
+    // Sprawdź czy wszystkie elementy zostały znalezione
+    if (!form || !resultDiv || !resultContent || !loadingDiv || !errorDiv || !questionInput || !answerInput) {
+      console.error("Nie znaleziono wszystkich wymaganych elementów DOM");
+      return;
+    }
+
+    // Subskrypcja do zmian w store
+    loadingStore.subscribe((loading) => {
+      loadingDiv.classList.toggle('hidden', !loading);
+    });
+
+    resultStore.subscribe((result) => {
+      if (result) {
+        resultDiv.classList.remove('hidden');
+        try {
+          const parsedContent = JSON.parse(result.message.content);
+          
+          // Wyświetl wynik w czytelnej formie
+          resultContent.innerHTML = `
+            <p class="text-lg font-semibold ${parsedContent.isSpam ? 'text-red-600' : 'text-green-600'}">
+              ${parsedContent.isSpam ? '🚫 To jest spam!' : '✅ To nie jest spam.'}
+            </p>
+          `;
+        } catch (error) {
+          resultContent.textContent = result.message.content;
+        }
+      } else {
+        resultDiv.classList.add('hidden');
+      }
+    });
+
+    errorStore.subscribe((error) => {
+      if (error) {
+        errorDiv.classList.remove('hidden');
+        errorDiv.textContent = error;
+      } else {
+        errorDiv.classList.add('hidden');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Pobierz wartości z formularza
+      const question = questionInput.value;
+      const answer = answerInput.value;
+      
+      try {
+        loadingStore.set(true);
+        errorStore.set(null);
+        
+        // Wywołaj API
+        const response = await ollamaApi.checkSpam(question, answer);
+        resultStore.set(response);
+      } catch (error) {
+        errorStore.set(error instanceof Error ? error.message : 'Wystąpił błąd podczas przetwarzania zapytania.');
+        resultStore.set(null);
+      } finally {
+        loadingStore.set(false);
+      }
+    });
+  });
+</script>

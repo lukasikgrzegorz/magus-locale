@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TrialCard from '../components/TrialCard.astro';
+import { trialsData } from '../store/trials';
+---
+
+<Layout title="Magus Locale - Testy językowe dla magów">
+  <header class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-primary-800 mb-4">Magus Locale</h1>
+    <p class="text-xl text-gray-600">Zaklęcia do lokalnego testowania modeli językowych</p>
+  </header>
+
+  <section class="trials-list">
+    {trialsData.map(trial => (
+      <TrialCard 
+        title={trial.title}
+        description={trial.description}
+        slug={trial.slug}
+      />
+    ))}
+  </section>
+</Layout>

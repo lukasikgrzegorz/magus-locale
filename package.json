@@ -1,0 +1,20 @@
+{
+  "name": "magus-locale",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^4.0.0",
+    "nanostores": "^0.9.3"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.3",
+    "@astrojs/tailwind": "^5.0.0"
+  }
+}
